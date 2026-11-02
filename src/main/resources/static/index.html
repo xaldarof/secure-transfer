@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="referrer" content="no-referrer">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="color-scheme" content="light">
+  <title>Secret Transfer</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/css/style.css">
+  <script type="module" src="/js/app.js"></script>
+</head>
+<body>
+<main class="shell">
+  <header class="brand">
+    <svg class="logo" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2 4 5v6c0 5 3.4 9.4 8 11 4.6-1.6 8-6 8-11V5l-8-3Zm0 6a3 3 0 0 1 1 5.83V17h-2v-3.17A3 3 0 0 1 12 8Z"/></svg>
+    <span>Secret Transfer</span>
+    <span class="pill pill-ok" title="Encrypted in your browser with AES-256-GCM">E2EE</span>
+  </header>
+
+  <noscript><div class="card" data-title="Error"><p>This app needs JavaScript: all encryption happens in your browser.</p></div></noscript>
+
+  <!-- ===================== Sender: home ===================== -->
+  <section class="card" data-screen="home" data-title="Send Secret" hidden>
+    <h1>Send a secret</h1>
+    <p class="muted">Passwords, API keys, tokens — encrypted on this device before anything is sent.</p>
+    <label for="secret" class="label">Secret</label>
+    <textarea id="secret" class="mono" rows="6" spellcheck="false" autocomplete="off" autocapitalize="off"
+              autocorrect="off" placeholder="Paste your secret here…" maxlength="32768"></textarea>
+    <div class="row between small muted"><span id="secret-size">0 B</span><span>max 32 KB</span></div>
+    <label class="switch" for="auto-send">
+      <input type="checkbox" id="auto-send" role="switch">
+      <span class="switch-track" aria-hidden="true"><span class="switch-thumb"></span></span>
+      <span class="switch-text">
+        <span>Auto-send</span>
+        <span class="small muted">Send automatically as soon as the receiver opens the link</span>
+      </span>
+    </label>
+    <p class="error" id="home-error" role="alert" hidden></p>
+    <button class="btn btn-primary" id="create-btn" type="button">Create Secure Transfer</button>
+    <details class="explain">
+      <summary>How it works</summary>
+      <ul>
+        <li>Your browser generates a random 256-bit key and puts it in the link after <code>#</code>. Browsers never send that part to the server.</li>
+        <li>The secret is encrypted locally with AES-256-GCM and relayed live over a WebSocket. Nothing is stored.</li>
+        <li>The receiver decrypts locally and sends back a signed confirmation.</li>
+        <li>The link works once, for 5 minutes. Anyone holding the full link can read the secret — share it over a channel you trust.</li>
+      </ul>
+    </details>
+  </section>
+
+  <!-- ===================== Sender: waiting ===================== -->
+  <section class="card" data-screen="waiting" data-title="Waiting for Receiver" hidden>
+    <div class="status"><span class="dot dot-wait"></span><span id="waiting-label">Waiting for receiver</span></div>
+    <h1>Share this link</h1>
+    <p class="muted" id="waiting-help">Keep this tab open. The secret stays on your device until the receiver connects and you press send.</p>
+    <div class="linkbox mono" id="share-link" tabindex="0"></div>
+    <div class="row">
+      <button class="btn btn-primary" id="copy-link-btn" type="button">Copy link</button>
+      <button class="btn" id="share-btn" type="button" hidden>Share…</button>
+    </div>
+    <div class="row between small muted">
+      <span>Expires in <strong id="countdown-waiting" class="mono">5:00</strong></span>
+      <button class="btn-link" id="cancel-waiting-btn" type="button">Cancel</button>
+    </div>
+  </section>
+
+  <!-- ===================== Sender: connected ===================== -->
+  <section class="card" data-screen="connected" data-title="Ready to Send" hidden>
+    <div class="status ok"><span class="dot dot-ok"></span><span>Receiver connected</span></div>
+    <h1>Ready to send</h1>
+    <p class="muted">The receiver proved they hold the link key. The secret will be encrypted now and sent once.</p>
+    <button class="btn btn-primary" id="send-btn" type="button">Send Secret</button>
+    <div class="row between small muted">
+      <span>Expires in <strong id="countdown-connected" class="mono">5:00</strong></span>
+      <button class="btn-link" id="cancel-connected-btn" type="button">Cancel transfer</button>
+    </div>
+  </section>
+
+  <!-- ===================== Sender: sent, awaiting ACK ===================== -->
+  <section class="card" data-screen="sending" data-title="Sending..." hidden>
+    <div class="status"><span class="dot dot-wait"></span><span>Encrypted and sent</span></div>
+    <h1>Waiting for confirmation…</h1>
+    <p class="muted">Waiting for the receiver's signed acknowledgment of successful decryption.</p>
+  </section>
+
+  <!-- ===================== Receiver: waiting ===================== -->
+  <section class="card" data-screen="receiving" data-title="Incoming Secret" hidden>
+    <div class="status"><span class="dot dot-wait"></span><span id="receiving-label">Connecting…</span></div>
+    <h1>Incoming secret</h1>
+    <p class="muted" id="receiving-help">Keep this tab open. The sender will send the secret shortly.</p>
+  </section>
+
+  <!-- ===================== Receiver: received ===================== -->
+  <section class="card" data-screen="received" data-title="Secret Received" hidden>
+    <div class="status ok"><span class="dot dot-ok"></span><span id="received-label">Transfer completed</span></div>
+    <h1>Your secret</h1>
+    <pre class="secret mono" id="secret-out" aria-live="polite"></pre>
+    <div class="row">
+      <button class="btn btn-primary" id="copy-secret-btn" type="button">Copy secret</button>
+      <button class="btn" id="toggle-secret-btn" type="button" aria-pressed="false">Show</button>
+    </div>
+    <div class="row between small muted">
+      <span>Decrypted on this device only. Copied text may remain in your clipboard.</span>
+      <button class="btn-link" id="clear-secret-btn" type="button">Clear</button>
+    </div>
+  </section>
+
+  <!-- ===================== Shared: result / notice ===================== -->
+  <section class="card" data-screen="notice" data-title="Status" hidden>
+    <div class="status" id="notice-status"><span class="dot" id="notice-dot"></span><span id="notice-label"></span></div>
+    <h1 id="notice-title"></h1>
+    <p class="muted" id="notice-text"></p>
+    <a class="btn btn-primary" href="/" id="notice-new">Create new transfer</a>
+  </section>
+
+  <footer class="foot small muted">
+    No accounts · No storage · Keys never leave your browser.
+    End-to-end encryption here relies on this server delivering honest JavaScript — see README.
+    <div class="foot-meta">
+      <span>© 2026 Xoldarov Temur</span>
+    </div>
+  </footer>
+</main>
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+</body>
+</html>

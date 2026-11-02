@@ -1,0 +1,9 @@
+{
+  "name": "secure-transfer-js-tests",
+  "private": true,
+  "type": "module",
+  "description": "Dev-only: runs the browser crypto/protocol unit tests under Node (no dependencies).",
+  "scripts": {
+    "test": "node --test src/test/js/"
+  }
+}

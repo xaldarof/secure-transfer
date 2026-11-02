@@ -1,0 +1,10 @@
+# Caddy: automatic HTTPS (Let's Encrypt) + WSS. Run the app with
+#   APP_ALLOWED_ORIGINS=https://secrets.example.com SERVER_FORWARD_HEADERS_STRATEGY=native
+secrets.example.com {
+	encode gzip
+	# Do not log request URIs at all (they contain session IDs; fragments are never sent).
+	log {
+		output discard
+	}
+	reverse_proxy 127.0.0.1:8080
+}

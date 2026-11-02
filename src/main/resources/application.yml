@@ -1,0 +1,40 @@
+server:
+  port: ${PORT:8080}
+  # Set to "native" behind a trusted reverse proxy so client IPs / https scheme come from X-Forwarded-*.
+  forward-headers-strategy: ${SERVER_FORWARD_HEADERS_STRATEGY:none}
+  error:
+    include-message: never
+    include-stacktrace: never
+    include-exception: false
+    include-binding-errors: never
+    whitelabel:
+      enabled: false
+  tomcat:
+    max-http-form-post-size: 1KB
+    max-swallow-size: 64KB
+    connection-timeout: 10s
+
+spring:
+  application:
+    name: secure-transfer
+  main:
+    banner-mode: off
+  web:
+    resources:
+      cache:
+        period: 0
+  mvc:
+    log-resolved-exception: false
+
+app:
+  allowed-origins: ${APP_ALLOWED_ORIGINS:http://localhost:8080}
+  session-ttl: ${APP_SESSION_TTL:5m}
+  join-timeout: ${APP_JOIN_TIMEOUT:10s}
+  max-sessions: ${APP_MAX_SESSIONS:10000}
+  sessions-per-minute-per-ip: ${APP_SESSIONS_PER_MINUTE_PER_IP:30}
+  connections-per-minute-per-ip: ${APP_CONNECTIONS_PER_MINUTE_PER_IP:60}
+
+logging:
+  level:
+    root: INFO
+    org.springframework.web.socket: WARN
